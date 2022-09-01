@@ -1,4 +1,3 @@
-from curses.ascii import isdigit
 import sys
 
 class Token():
@@ -8,7 +7,7 @@ class Token():
         self.position = position
 
     def __repr__(self):
-        print("Type : ", self.type, ", Valeur : ", self.valeur, ", Position : ", self.position)
+        print(f"Type : {self.type}, Valeur : {self.valeur}, Position : {self.position}")
 
 
 # MAIN
@@ -29,17 +28,17 @@ def next():
 
     char =  string[position]
 
-    if (char == '\n'):
+    if char == '\n':
         ligne+=1
         position+=1
         return next()
-    elif (char == ' ' or char == '\t' or char == '\r'):
+    elif char == ' ' or char == '\t' or char == '\r':
         position+=1
         return next()
-    elif (char == '('):
+    elif char == '(':
         position += 1
         token = Token("po", None, ligne)
-    elif (char == ')'):
+    elif char == ')':
         pass
     elif char == '{':
         pass
