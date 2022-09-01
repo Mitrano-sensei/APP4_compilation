@@ -39,25 +39,35 @@ def next():
         position += 1
         token = Token("po", None, ligne)
     elif char == ')':
-        pass
+        position += 1
+        token = Token("pf", None, ligne)
     elif char == '{':
-        pass
+        position += 1
+        token = Token("ao", None, ligne)
     elif char == '}':
-        pass
+        position += 1
+        token = Token("af", None, ligne)
     elif char == '[':
-        pass
+        position += 1
+        token = Token("co", None, ligne)
     elif char == ']':
-        pass
+        position += 1
+        token = Token("cf", None, ligne)
     elif char == '+':
-        pass
+        position += 1
+        token = Token("add", None, ligne)
     elif char == '-':
-        pass
+        position += 1
+        token = Token("sub", None, ligne)
     elif char == '*':
-        pass
+        position += 1
+        token = Token("star", None, ligne)
     elif char == '/':
-        pass
+        position += 1
+        token = Token("div", None, ligne)
     elif char == '%':
-        pass
+        position += 1
+        token = Token("mod", None, ligne)
     elif char == '&':
         ##
         pass
