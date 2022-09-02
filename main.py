@@ -27,6 +27,7 @@ def next():
     global ligne
 
     char =  string[position]
+    token = None
 
     if char == '\n':
         ligne+=1
@@ -69,39 +70,70 @@ def next():
         position += 1
         token = Token("mod", None, ligne)
     elif char == '&':
-        ##
+        ## TODO
         pass
     elif char == '>':
-        ##
+        ## TODO
         pass
     elif char == '<':
-        ##
+        ## TODO
         pass
     elif char == '!':
-        ##
+        ## TODO
         pass
     elif char == '=':
-        ##
+        ## TODO
         pass
     elif char == '|':
-        ## (un seul = erreur)
+        ## (un seul = erreur) TODO
         pass
     elif char == ';':
-        pass
+        position += 1
+        token = Token("pvirg", None, ligne)
     elif char == ',':
-        pass
+        position += 1
+        token = Token("virg", None, ligne)
     else:
         # MOTS CLES
         if ord('z') >= ord(char.lower()) >= ord('a'):
-            ## while toussa
-            ## NE PAS OUBLIER RETURN IF ETC
+            if char == 'i' and string[position+1] == 'f':
+                position+=2
+                token = Token("if", None, ligne)
+            elif char == 'r':
+                # Verif return TODO : FAIRE UN SLICE, JSP COMMENT ON FAIT
+                pass
+            elif char == 'e':
+                # Verif else TODO
+                pass
+            else:
+                s = "" + char
+                position+=1
+                char = string[position]
+                while ord('z') >= ord(char.lower())  >= ord('a'):
+                    s+= char
+                    position+=1
+                    char=string[position]
+                
+                token = Token("str", s, ligne)
             pass
         elif char.isdigit():
-            ## while toussa
-            pass
+            s = "" + char
+            position+=1
+            char = string[position]
+            while ord('z') >= ord(char.lower())  >= ord('a'):
+                s+= char
+                position+=1
+                char=string[position]
+            token = Token("const", s, ligne) # TODO : Transformer s en nombre
+    # TODO : End Of Stream
 
 
-    # Verif
+    ## Verif Erreurs
+    if token == None:
+        return -1
+    
+    ## Return
+    return token
 
 ## Tings
 courant = None
@@ -112,6 +144,3 @@ while n.type != "EOS":
     precedant = courant
     courant = n
     print(courant)
-    
-
-
