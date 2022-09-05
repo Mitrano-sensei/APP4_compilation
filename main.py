@@ -1,4 +1,5 @@
 import sys
+from webbrowser import Opera
 
 class Token():
     def __init__(self, type, valeur, position):
@@ -22,6 +23,12 @@ class Node:
     
     def add_child(self, child):
         self.children.append(child)
+
+class Operation:
+    def __init__(self, prio, noeud, AG):
+        self.prio = prio
+        self.noeud = noeud
+        self.AG = AG
 
 # Le compilo
 ## Lecture de fichier
@@ -214,20 +221,43 @@ def F():
 def I(): 
     return E()
 
-def E():
-    return P()
+def E(pmin = 0):
+    global courant
+    
+    table = {
+        "add": Operation(5, "nd_add", 1),
+        "sub": Operation(5, "nd_sub", 1),
+        "star": Operation(6, "nd_mul", 1),
+        "div": Operation(6, "nd_div", 1),
+        "mod": Operation(6, "nd_mod", 1),
+        "equal": Operation(3, "nd_set", 0)
+    }
+
+    A1 = P()
+    while(courant.type in table):
+        op = courant.type
+        if table[op].prio >= pmin:
+            next()
+            A2 = E(table[op].prio + table[op].AG)
+            A = Node(table[op].noeud, None, precedant.position)
+            A.add_child(A1)
+            A.add_child(A2)
+            A1 = A
+        else: 
+            break
+    return A1
 
 def P():
     if check('sub'): 
         N = P()
-        M = Node('sub', None, courant.position)
+        M = Node('nd_neg', None, courant.position)
         M.add_child(N)
         return M
     elif check('add'):
         return P()
     elif check('neglog'):
         N = P()
-        M = Node('neglog', None, courant.position)
+        M = Node('nd_neglog', None, courant.position)
         M.add_child(N)
         return M
     else:
@@ -273,7 +303,7 @@ def AS():
     # P (pour prefixe)= -P | +P | !P | S
     # S (pour suffixe)= A
     # A (pour Atome) = Constante | ( E )
-    return None
+    return G()
 
 ## Analyse Sementique
 def ASe():
@@ -282,19 +312,38 @@ def ASe():
 ## Generation de Code
 def Gc():
     Node = ASe()
-    # TODO
-    # Ecrire un fichier qui commence par un label .start puis les instructions assembleurs
-    # Le premier :
-    ##  .start
-    ##      halt
-    pass
+    global outtxt 
+    outtxt = f".start\n{GenNode(Node)} \ndbg \nhalt"
 
+def GenNode(Node):
+    match Node.type:
+        case "const":
+            return f"push {Node.valeur}"
+        case "nd_add":
+            return f"{GenNode(Node.children[0])}\n{GenNode(Node.children[1])}\nadd"
+        case "nd_sub":
+            return f"{GenNode(Node.children[0])}\n{GenNode(Node.children[1])}\nsub"
+        case "nd_mul":
+            return f"{GenNode(Node.children[0])}\n{GenNode(Node.children[1])}\nmul"
+        case "nd_div":
+            return f"{GenNode(Node.children[0])}\n{GenNode(Node.children[1])}\ndiv"
+        case "nd_mod":
+            return f"{GenNode(Node.children[0])}\n{GenNode(Node.children[1])}\nmod"
+        case "nd_equal":
+            return f"{GenNode(Node.children[0])}\n{GenNode(Node.children[1])}\nERROR"
+        case "nd_neg":
+            return f"push 0\n{GenNode(Node.children[0])}\nsub"
 
 # Main
 courant = None
 precedant = None
 
 next()
-while courant.type != "EOS":
-    print()
-    next()
+Gc()
+
+# Ecriture de fichier
+
+print(outtxt)
+
+with open("out.txt", "w") as out:
+    out.write(outtxt)

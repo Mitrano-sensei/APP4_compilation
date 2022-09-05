@@ -1,0 +1,14 @@
+.start
+push 12
+push 13
+push 4
+push 2
+mul
+push 3
+div
+push 2
+mul
+add
+mul 
+dbg 
+halt
