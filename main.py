@@ -219,7 +219,29 @@ def F():
     return I()
 
 def I(): 
-    return E()
+    # check if
+    if check('if'):
+        accept('po')
+        test = E()
+        accept('pf')
+        then = I()
+        N = Node('nd_cond', None, precedant.position)
+        N.add_child(test)
+        N.add_child(then)
+        if check('else'):
+            else_ = I()
+            N.add_child(else_)
+        return N
+    elif check('ao'):
+        N = Node('nd_block', None, precedant.position)
+        while not check('af'):
+            N.add_child(I())
+        return N
+    else:
+        N = Node('nd_drop', None, precedant.position)
+        N.add_child(E())
+        accept('pvirg')
+        return N
 
 def E(pmin = 0):
     global courant
@@ -315,24 +337,43 @@ def Gc():
     global outtxt 
     outtxt = f".start\n{GenNode(Node)} \ndbg \nhalt"
 
-def GenNode(Node):
-    match Node.type:
+label = 0
+
+def GenNode(Node_):
+    global label
+    match Node_.type:
         case "const":
-            return f"push {Node.valeur}"
+            return f"push {Node_.valeur}"
         case "nd_add":
-            return f"{GenNode(Node.children[0])}\n{GenNode(Node.children[1])}\nadd"
+            return f"{GenNode(Node_.children[0])}\n{GenNode(Node_.children[1])}\nadd"
         case "nd_sub":
-            return f"{GenNode(Node.children[0])}\n{GenNode(Node.children[1])}\nsub"
+            return f"{GenNode(Node_.children[0])}\n{GenNode(Node_.children[1])}\nsub"
         case "nd_mul":
-            return f"{GenNode(Node.children[0])}\n{GenNode(Node.children[1])}\nmul"
+            return f"{GenNode(Node_.children[0])}\n{GenNode(Node_.children[1])}\nmul"
         case "nd_div":
-            return f"{GenNode(Node.children[0])}\n{GenNode(Node.children[1])}\ndiv"
+            return f"{GenNode(Node_.children[0])}\n{GenNode(Node_.children[1])}\ndiv"
         case "nd_mod":
-            return f"{GenNode(Node.children[0])}\n{GenNode(Node.children[1])}\nmod"
+            return f"{GenNode(Node_.children[0])}\n{GenNode(Node_.children[1])}\nmod"
         case "nd_equal":
-            return f"{GenNode(Node.children[0])}\n{GenNode(Node.children[1])}\nERROR"
+            return f"{GenNode(Node_.children[0])}\n{GenNode(Node_.children[1])}\nERROR"
         case "nd_neg":
-            return f"push 0\n{GenNode(Node.children[0])}\nsub"
+            return f"push 0\n{GenNode(Node_.children[0])}\nsub"
+        case "nd_drop":
+            return f"{GenNode(Node_.children[0])}\ndrop"
+        case "nd_block":
+            return "\n".join([f"{GenNode(child)}" for child in Node_.children])
+        case "nd_cond":
+            print(f"FLAG : {len(Node_.children)}")
+            if len(Node_.children) < 3:
+                Node_.add_child(Node(None, None, None))
+            l1 = label
+            l2 = label+1
+            label = label+2
+            s = f"{GenNode(Node_.children[0])} \njumpf l{l1} \n{GenNode(Node_.children[1])} \njump l{l2} \n.l{l1} \n{GenNode(Node_.children[2])} \n.l{l2}"
+            return s
+        case _:
+            return ""
+
 
 # Main
 courant = None
@@ -345,5 +386,5 @@ Gc()
 
 print(outtxt)
 
-with open("out.txt", "w") as out:
+with open(dest, "w") as out:
     out.write(outtxt)
