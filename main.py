@@ -288,6 +288,13 @@ def P():
 def S():
     return A()
 
+class Symbol():
+    def __init__(bashboush, name, ident=None, type="sym_var", adr=None):
+        bashboush.ident = ident
+        bashboush.type = type
+        bashboush.adr = adr
+        bashboush.name = name
+
 def A():
     if check("const"):
         return Node('const', precedant.valeur, precedant.position) 
@@ -295,13 +302,16 @@ def A():
         N = E()
         accept('pf')
         return N
+    elif check("var"):
+        return Node('nd_var', Symbol(precedant.valeur), precedant.position)     # TODO A verifier
     else:
-        error()
+        error(f"Erreur reconnaissance Atome ici : {precedant.position}")
 
-def error():
-    # TODO
-    # Faire une fonction erreur
-    print("ERROR OMG OMG OMG !!!")
+class CompilationException(Exception):
+    pass
+
+def error(msg = "ERROR OMG OMG OMG !!!"):
+    raise CompilationException(msg)
 
 def check(type):
     global courant
@@ -328,14 +338,58 @@ def AS():
     return G()
 
 ## Analyse Sementique
+nbvar = 0
 def ASe():
-    return AS()
+    N = AS()
+    global nbvar
+    nbvar = 0
+    ASeNode(N)
+    return N
+
+def ASeNode(N):
+    global nbvar
+    match(N.type):
+        case "nd_block":
+            start_block()
+            for child in N.children:
+                ASeNode(child)
+            end_block()
+        case "nd_var":
+            N.valeur.adr = find(N.valeur.ident).adr
+        case "nd_decl":
+            for child in N.children:
+                S = declare(child.ident)
+                S.type = "sym_var"
+                S.adr = nbvar
+                nbvar+=1
+        case "nd_affect":
+            if N.children[0].type != "var":
+                error("Affectation à un truc pas affectable.")
+            for child in N.children:
+                ASeNode(child)
+        case _:
+            for child in N.children:
+                ASeNode(child)
+
+def start_block():
+    pass
+
+def end_block():
+    pass
+
+def find(ident):
+    # Faire retourner un Symbole
+    pass
+
+def declare(ident):
+    pass
 
 ## Generation de Code
 def Gc():
     Node = ASe()
     global outtxt 
-    outtxt = f".start\n{GenNode(Node)} \ndbg \nhalt"
+    global nbvar
+    outtxt = f".start\nresn {nbvar}\n{GenNode(Node)} \ndbg \nhalt"
 
 label = 0
 
