@@ -240,16 +240,13 @@ def I():
             N.add_child(I())
         return N
     elif check('int'):
-        print("Bashboush was here<")
         decl = Node("nd_decl", None, precedant.position)
         accept("ident")
-
         decl.add_child(Node("nd_var", precedant.valeur, precedant.position))
         while not check('pvirg'):
             accept('virg')
             accept('ident')
-            decl.add_child(Node("nd_var", Symbol(precedant.valeur, None), precedant.position))
-
+            decl.add_child(Node("nd_var", precedant.valeur, precedant.position))
         return decl
     elif check('while'):
         accept('po')
@@ -324,7 +321,7 @@ def E(pmin = 0):
         "star": Operation(6, "nd_mul", 1),
         "div": Operation(6, "nd_div", 1),
         "mod": Operation(6, "nd_mod", 1),
-        "equal": Operation(3, "nd_set", 0)
+        "equal": Operation(3, "nd_affect", 0)
     }
 
     A1 = P()
@@ -336,6 +333,10 @@ def E(pmin = 0):
             A = Node(table[op].noeud, None, precedant.position)
             A.add_child(A1)
             A.add_child(A2)
+
+            if A.type == "nd_affect":
+                print(f"E1 : {A1.type}, E2 : {A2.type} \n")
+
             A1 = A
         else: 
             break
@@ -365,6 +366,9 @@ class Symbol():
         bashboush.ident = ident
         bashboush.type = type
         bashboush.adr = adr
+
+    def __repr__(self) -> str:
+        return f"XXX Ident : {self.ident}, Type : {self.type}, Adr : {self.adr} YYY\n"
 
 def A():
     if check("const"):
@@ -432,7 +436,7 @@ def ASeNode(N):
                 s= declare(child)
                 child.adr = s.adr
         case "nd_affect":
-            if N.children[0].type != "ident":
+            if N.children[0].type != "nd_var":
                 error("Affectation à un truc pas affectable.")
             for child in N.children:
                 ASeNode(child)
@@ -535,7 +539,7 @@ def GenNode(Node_):
 
             return s
         case "nd_decl":
-            pass
+            return ""
         case "nd_var":
             return f"get {Node_.adr}; {Node_.valeur} \n"
         case "nd_affect":
