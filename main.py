@@ -11,10 +11,12 @@ class Token():
         return (f"Type : {self.type}, Valeur : {self.valeur}, Ligne : {self.position}")
 
 class Node:
-    def __init__(self, type, valeur, ligne, children = None):
+    def __init__(self, type, valeur, ligne, adr = None, children = None):
         self.type = type
         self.valeur = valeur
         self.ligne = ligne
+        self.adr = adr
+
         if children == None:
             self.children = []
         else:
@@ -180,9 +182,9 @@ def next():
                 elif s == "continue":
                     token = Token("continue", None, ligne)
                 else:
-                    token = Token("var", s, ligne)           
+                    token = Token("ident", s, ligne)           
             else:
-                token = Token("var", s, ligne)
+                token = Token("ident", s, ligne)
                 
         elif char.isdigit():
             s = "" + char
@@ -237,8 +239,78 @@ def I():
         while not check('af'):
             N.add_child(I())
         return N
+    elif check('int'):
+        print("Bashboush was here<")
+        decl = Node("nd_decl", None, precedant.position)
+        accept("ident")
+
+        decl.add_child(Node("nd_var", precedant.valeur, precedant.position))
+        while not check('pvirg'):
+            accept('virg')
+            accept('ident')
+            decl.add_child(Node("nd_var", Symbol(precedant.valeur, None), precedant.position))
+
+        return decl
+    elif check('while'):
+        accept('po')
+        test = E()
+        accept('pf')
+        instr = I()
+        l = Node('nd_loop', None, precedant.position)
+        cond = Node('nd_cond', None, precedant.position)
+        cond.add_child(test)
+        cond.add_child(instr)
+        cond.addchild(Node('nd_break', None, precedant.position))
+        l.add_child(cond)
+        return l
+    elif check('do'):
+        instr = I()
+        accept('while')
+        accept('po')
+        test = E()
+        accept('pf')
+        accept('pvirg')
+
+        l = Node('nd_loop', None, precedant.position)
+        l.add_child(instr)
+        cond = Node('nd_cond', None, precedant.position)
+        not_ = Node('nd_neglog', None, precedant.position)
+        not_.add_child(test)
+        cond.add_child(not_)
+        cond.add_child(Node('nd_break', None, precedant.position))
+
+        return l
+    elif check('for'):
+        accept('po')
+        init = E()
+        accept('pvirg')
+        test = E()
+        accept('pvirg')
+        next = E()
+        accept('po')
+
+        instr = I()
+
+        seq = Node('nd_seq', None, precedant.position)
+        seq.add_child(init)
+        l = Node('nd_loop', None, precedant.position)
+        seq.add_child(l)
+
+        l.add_child(instr)
+        l.add_child(next)
+        
+        cond = Node('nd_cond', None, precedant.position)
+
+        not_ = Node('nd_neglog', None, precedant.position)
+        not_.add_child(test)
+        cond.add_child(not_)
+        cond.add_child(Node('nd_break', None, precedant.position))
+        
+        l.add_child(cond)
+
+        return l
     else:
-        N = Node('nd_drop', None, precedant.position)
+        N = Node('nd_drop', None, courant.position)
         N.add_child(E())
         accept('pvirg')
         return N
@@ -289,11 +361,10 @@ def S():
     return A()
 
 class Symbol():
-    def __init__(bashboush, name, ident=None, type="sym_var", adr=None):
+    def __init__(bashboush, ident=None, type="sym_var", adr=None):
         bashboush.ident = ident
         bashboush.type = type
         bashboush.adr = adr
-        bashboush.name = name
 
 def A():
     if check("const"):
@@ -302,8 +373,8 @@ def A():
         N = E()
         accept('pf')
         return N
-    elif check("var"):
-        return Node('nd_var', Symbol(precedant.valeur), precedant.position)     # TODO A verifier
+    elif check("ident"):
+        return Node('nd_var', precedant.valeur, precedant.position)     # TODO A verifier
     else:
         error(f"Erreur reconnaissance Atome ici : {precedant.position}")
 
@@ -355,15 +426,13 @@ def ASeNode(N):
                 ASeNode(child)
             end_block()
         case "nd_var":
-            N.valeur.adr = find(N.valeur.ident).adr
+            N.adr = find(N.valeur).adr
         case "nd_decl":
             for child in N.children:
-                S = declare(child.ident)
-                S.type = "sym_var"
-                S.adr = nbvar
-                nbvar+=1
+                s= declare(child)
+                child.adr = s.adr
         case "nd_affect":
-            if N.children[0].type != "var":
+            if N.children[0].type != "ident":
                 error("Affectation à un truc pas affectable.")
             for child in N.children:
                 ASeNode(child)
@@ -371,18 +440,38 @@ def ASeNode(N):
             for child in N.children:
                 ASeNode(child)
 
+pile = [{}]
+
 def start_block():
-    pass
+    global pile
+    pile.append({})
 
 def end_block():
-    pass
+    global pile
+    pile.pop()
 
 def find(ident):
     # Faire retourner un Symbole
-    pass
+    global pile
 
-def declare(ident):
-    pass
+    for table in pile[::-1]:
+        if ident in table:
+            return table[ident]    
+    error("Erreur : Variable inconnue/pas dans le scope")
+
+def declare(c):
+    global nbvar
+    global pile
+    
+    if c.valeur in pile[-1]:
+        error("Variable deja déclaree")
+    
+    s = Symbol(c.valeur, "sym_var", nbvar)
+    pile[-1][c.valeur] = s
+    nbvar += 1
+
+    return s
+
 
 ## Generation de Code
 def Gc():
@@ -392,9 +481,11 @@ def Gc():
     outtxt = f".start\nresn {nbvar}\n{GenNode(Node)} \ndbg \nhalt"
 
 label = 0
+label_break = 0
 
 def GenNode(Node_):
     global label
+    global label_break
     match Node_.type:
         case "const":
             return f"push {Node_.valeur}"
@@ -425,6 +516,30 @@ def GenNode(Node_):
             label = label+2
             s = f"{GenNode(Node_.children[0])} \njumpf l{l1} \n{GenNode(Node_.children[1])} \njump l{l2} \n.l{l1} \n{GenNode(Node_.children[2])} \n.l{l2}"
             return s
+        case "nd_break":
+            return f"jump l{label_break}"
+        case "nd_loop":
+            temp = label_break
+            label_break = label
+            label += 1
+            l1 = label
+            label += 1
+
+            s = f".l{l1} \n"
+            for child in Node_.child:
+                s += GenNode(child)
+            
+            s += f"jump l{l1}"
+            s += f".l{label_break}"
+            label_break = temp
+
+            return s
+        case "nd_decl":
+            pass
+        case "nd_var":
+            return f"get {Node_.adr}; {Node_.valeur} \n"
+        case "nd_affect":
+            return f"{GenNode(Node_.children[1])} \ndup \nset {Node_.children[0].adr}; {Node_.children[0].valeur}"
         case _:
             return ""
 
