@@ -218,7 +218,19 @@ def G():
     return F()
 
 def F():
-    return I()
+    accept('int')
+    accept('ident')
+    
+    N = Node("nd_func", precedant.valeur, precedant.ligne)
+    
+    accept("po")
+    accept("pf")
+    instr = I()
+
+    N.add_child(Node("nd_arg", "NON IMPLEMENTE", precedant.ligne))
+    N.add_child(instr)
+
+    return N
 
 def I(): 
     # check if
@@ -306,6 +318,10 @@ def I():
         l.add_child(cond)
 
         return l
+    elif check("return"):
+        N = E()
+        accept("pvirg")
+        return N
     else:
         N = Node('nd_drop', None, courant.position)
         N.add_child(E())
@@ -378,7 +394,11 @@ def A():
         accept('pf')
         return N
     elif check("ident"):
-        return Node('nd_var', precedant.valeur, precedant.position)     # TODO A verifier
+        if check("po"):     # Fonctions
+            accept("pf")
+            return Node('nd_call', precedant.valeur, precedant.position) 
+        else:
+            return Node('nd_var', precedant.valeur, precedant.position)
     else:
         error(f"Erreur reconnaissance Atome ici : {precedant.position}")
 
@@ -416,7 +436,7 @@ def AS():
 nbvar = 0
 def ASe():
     N = AS()
-    global nbvar
+    global nbvar        # On choisit de ne pas mettre nbvar dans le noeud fonction, on a mis le nom à la place
     nbvar = 0
     ASeNode(N)
     return N
@@ -440,6 +460,15 @@ def ASeNode(N):
                 error("Affectation à un truc pas affectable.")
             for child in N.children:
                 ASeNode(child)
+        case "nd_func":
+            s = declare(N.valeur)
+            s.type = "fonction"
+            for child in N.children:
+                ASeNode(child)
+        case "nd_call":
+            s = find(N.valeur)
+            if s.type != "fonction":
+                error("Erreur : A essaye d'appeler autre chose qu'une fonction !")
         case _:
             for child in N.children:
                 ASeNode(child)
@@ -479,10 +508,18 @@ def declare(c):
 
 ## Generation de Code
 def Gc():
-    Node = ASe()
     global outtxt 
     global nbvar
-    outtxt = f".start\nresn {nbvar}\n{GenNode(Node)} \ndbg \nhalt"
+    
+    outtxt = ""
+
+    while True:
+        N = ASe()
+        outtxt += GenNode(N)
+        if courant.type == "EOS":
+            break
+
+    outtxt += f".start\nprep main\ncall 0\ndbg \nhalt"
 
 label = 0
 label_break = 0

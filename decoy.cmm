@@ -1,9 +1,12 @@
+int main()
 {
+    int Mitra, Bashen;
 
-int BashBoush, Mitra;
+    Mitra = 2;
+    Bashen = Mitra;
 
-Mitra = 2;
-BashBoush = 3;
+    int amour;
+    amour = Bashen + Mitra;
 
-Mitra + BashBoush;
+    return amour;
 }
