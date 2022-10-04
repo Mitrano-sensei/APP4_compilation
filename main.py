@@ -151,12 +151,12 @@ def next():
         token = Token("virg", None, ligne)
     else:
         # MOTS CLES
-        if ord('z') >= ord(char.lower()) >= ord('a'):
+        if ord('z') >= ord(char.lower()) >= ord('a') or char == "_":
             s = "" + char
             position+=1
             if position < len(string):
                 char = string[position]
-                while ord('z') >= ord(char.lower())  >= ord('a'):
+                while ord('z') >= ord(char.lower())  >= ord('a') or char.isdigit() or char == "_":
                     s+= char
                     position+=1
                     if position < len(string):
@@ -214,6 +214,16 @@ def next():
 
 ## Analyse Synthaxique
 
+def AS():
+    # G (le plus général, englobe les fonctions et plein de trucs qu'on utilise pas)
+    # F (une fonction)
+    # I (une instruction)
+    # E (une expression)
+    # P (pour prefixe)
+    # S (pour suffixe)
+    # A (pour Atome)
+    return G()
+
 def G():
     return F()
 
@@ -221,13 +231,23 @@ def F():
     accept('int')
     accept('ident')
     
-    N = Node("nd_func", precedant.valeur, precedant.ligne)
-    
+    N = Node("nd_func", precedant.valeur, precedant.position)
+    N.add_child(Node("nd_decl", None, precedant.position))
+
     accept("po")
+
+    if check("int"):
+        accept("ident")
+        N.children[0].add_child(Node("nd_arg", precedant.valeur, precedant.position))
+
+        while check('virg'):
+            accept("int")
+            accept("ident")
+            N.children[0].add_child(Node("nd_arg", precedant.valeur, precedant.position))
+
     accept("pf")
     instr = I()
 
-    N.add_child(Node("nd_arg", "NON IMPLEMENTE", precedant.ligne))
     N.add_child(instr)
 
     return N
@@ -319,7 +339,8 @@ def I():
 
         return l
     elif check("return"):
-        N = E()
+        N = Node("nd_return", None, precedant.position)
+        N.add_child(E())
         accept("pvirg")
         return N
     else:
@@ -384,7 +405,7 @@ class Symbol():
         bashboush.adr = adr
 
     def __repr__(self) -> str:
-        return f"XXX Ident : {self.ident}, Type : {self.type}, Adr : {self.adr} YYY\n"
+        return f"Ident : {self.ident}, Type : {self.type}, Adr : {self.adr}\n"
 
 def A():
     if check("const"):
@@ -394,9 +415,17 @@ def A():
         accept('pf')
         return N
     elif check("ident"):
-        if check("po"):     # Fonctions
-            accept("pf")
-            return Node('nd_call', precedant.valeur, precedant.position) 
+        name = precedant.valeur
+        N = Node('nd_call', name, precedant.position)
+        if check("po"):     # Appel de fonctions, call
+            if check("pf"):
+                return N
+            else:
+                N.add_child(E())
+                while check('virg'):
+                    N.add_child(E())
+                accept('pf')
+                return N          
         else:
             return Node('nd_var', precedant.valeur, precedant.position)
     else:
@@ -421,16 +450,6 @@ def check(type):
 def accept(type):
     if not check(type):
         error()
-
-def AS():
-    # G (le plus général, englobe les fonctions et plein de trucs qu'on utilise pas) = F *  (L'étoile signifie qu'on peut en avoir autant qu'on veut, mais on l'ignore pour l'instant)
-    # F (une fonction) = I
-    # I (une instruction) = E
-    # E (une expression) =  P + E | P
-    # P (pour prefixe)= -P | +P | !P | S
-    # S (pour suffixe)= A
-    # A (pour Atome) = Constante | ( E )
-    return G()
 
 ## Analyse Sementique
 nbvar = 0
@@ -461,14 +480,17 @@ def ASeNode(N):
             for child in N.children:
                 ASeNode(child)
         case "nd_func":
-            s = declare(N.valeur)
+            s = declare(N)
             s.type = "fonction"
+            start_block()
             for child in N.children:
                 ASeNode(child)
+            nbvar = nbvar - len(N.children[0].children)
+            end_block()
         case "nd_call":
             s = find(N.valeur)
             if s.type != "fonction":
-                error("Erreur : A essaye d'appeler autre chose qu'une fonction !")
+                error("Erreur : A essaye d'appeler autre chose qu'une fonction !")            
         case _:
             for child in N.children:
                 ASeNode(child)
@@ -524,41 +546,43 @@ def Gc():
 label = 0
 label_break = 0
 
-def GenNode(Node_):
+def GenNode(N):
     global label
     global label_break
-    match Node_.type:
+    match N.type:
         case "const":
-            return f"push {Node_.valeur}"
+            return f"push {N.valeur}\n"
         case "nd_add":
-            return f"{GenNode(Node_.children[0])}\n{GenNode(Node_.children[1])}\nadd"
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}add\n"
         case "nd_sub":
-            return f"{GenNode(Node_.children[0])}\n{GenNode(Node_.children[1])}\nsub"
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}sub\n"
         case "nd_mul":
-            return f"{GenNode(Node_.children[0])}\n{GenNode(Node_.children[1])}\nmul"
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}mul\n"
         case "nd_div":
-            return f"{GenNode(Node_.children[0])}\n{GenNode(Node_.children[1])}\ndiv"
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}div\n"
         case "nd_mod":
-            return f"{GenNode(Node_.children[0])}\n{GenNode(Node_.children[1])}\nmod"
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}mod\n"
         case "nd_equal":
-            return f"{GenNode(Node_.children[0])}\n{GenNode(Node_.children[1])}\nERROR"
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}ERROR\n"
         case "nd_neg":
-            return f"push 0\n{GenNode(Node_.children[0])}\nsub"
+            return f"push 0\n{GenNode(N.children[0])}sub\n"
         case "nd_drop":
-            return f"{GenNode(Node_.children[0])}\ndrop"
+            return f"{GenNode(N.children[0])}drop\n"
         case "nd_block":
-            return "\n".join([f"{GenNode(child)}" for child in Node_.children])
+            return "".join([f"{GenNode(child)}" for child in N.children])
         case "nd_cond":
-            print(f"FLAG : {len(Node_.children)}")
-            if len(Node_.children) < 3:
-                Node_.add_child(Node(None, None, None))
+            print(f"FLAG : {len(N.children)}")
+            if len(N.children) < 3:
+                N.add_child(Node(None, None, None))
             l1 = label
             l2 = label+1
             label = label+2
-            s = f"{GenNode(Node_.children[0])} \njumpf l{l1} \n{GenNode(Node_.children[1])} \njump l{l2} \n.l{l1} \n{GenNode(Node_.children[2])} \n.l{l2}"
+            s = f"{GenNode(N.children[0])}jumpf l{l1} \n{GenNode(N.children[1])}jump l{l2} \n.l{l1} \n{GenNode(N.children[2])}.l{l2}\n"
             return s
         case "nd_break":
             return f"jump l{label_break}"
+        case "nd_return":
+            return f"{GenNode(N.children[0])}ret\n"
         case "nd_loop":
             temp = label_break
             label_break = label
@@ -567,20 +591,24 @@ def GenNode(Node_):
             label += 1
 
             s = f".l{l1} \n"
-            for child in Node_.child:
+            for child in N.child:
                 s += GenNode(child)
             
-            s += f"jump l{l1}"
-            s += f".l{label_break}"
+            s += f"jump l{l1}\n"
+            s += f".l{label_break}\n"
             label_break = temp
 
             return s
         case "nd_decl":
             return ""
         case "nd_var":
-            return f"get {Node_.adr}; {Node_.valeur} \n"
+            return f"get {N.adr}; {N.valeur} \n"
         case "nd_affect":
-            return f"{GenNode(Node_.children[1])} \ndup \nset {Node_.children[0].adr}; {Node_.children[0].valeur}"
+            return f"{GenNode(N.children[1])}dup \nset {N.children[0].adr}; {N.children[0].valeur} \n"
+        case "nd_call":
+            return f"prep {N.valeur} \n" + "".join([f"{GenNode(child)}" for child in N.children]) + f"call {len(N.children)}\n"
+        case "nd_func":
+            return f".{N.valeur} \nresn {nbvar} \n{GenNode(N.children[1])}push 0 \nret \n"
         case _:
             return ""
 
