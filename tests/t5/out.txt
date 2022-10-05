@@ -1,21 +1,22 @@
 .BashBoush4Life 
 resn 1 
 push 4
-ret
+ret ; DEAD CODE FROM NOW
 push 0 
 ret 
+
 .main 
 resn 5 
 push 2
 dup 
-set 1; Mitra 
+set 1 ; Mitra 
 drop
-get 1; Mitra 
+get 1 ; Mitra 
 dup 
-set 2; Bashen 
+set 2 ; Bashen 
 drop
-get 2; Bashen 
-get 1; Mitra 
+get 2 ; Bashen 
+get 1 ; Mitra 
 add
 prep BashBoush4Life 
 push 2
@@ -23,12 +24,24 @@ push 3
 call 2
 add
 dup 
-set 4; amour 
+set 4 ; amour 
 drop
-get 4; amour 
-ret
+get 4 ; amour 
+ret ; DEAD CODE FROM NOW
 push 0 
 ret 
+
+
+;RUNTIME
+.adrof 
+get -1
+get 0 
+sub 
+push 1 
+sub 
+ret
+;RUNTIME
+
 .start
 prep main
 call 0

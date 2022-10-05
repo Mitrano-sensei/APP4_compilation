@@ -1,7 +1,9 @@
+from re import M
 import sys
+from tkinter import N
 from webbrowser import Opera
 
-class Token():
+class Token:
     def __init__(self, type, valeur, position):
         self.type = type
         self.valeur = valeur
@@ -22,6 +24,8 @@ class Node:
         else:
             self.children = children
 
+    def __repr__(self) -> str:
+        return f"Type : {self.type}, Valeur : {self.valeur}, Ligne : {self.ligne}, Adresse : {self.adr}, Enfants :" + "".join([n.type for n in self.children])
     
     def add_child(self, child):
         self.children.append(child)
@@ -112,11 +116,19 @@ def next():
             position+=1
             token = Token("esper", None, ligne)
     elif char == '>':
-        ## TODO
-        pass
+        if string[position+1] == "=":
+            position+=2
+            token = Token("sup_equal", None, ligne)
+        else:
+            position+=1
+            token = Token("sup", None, ligne)
     elif char == '<':
-        ## TODO
-        pass
+        if string[position+1] == "=":
+            position+=2
+            token = Token("inf_equal", None, ligne)
+        else:
+            position+=1
+            token = Token("inf", None, ligne)
     elif char == '!':
         position+=1
         token = Token("neglog", None, ligne)
@@ -273,10 +285,14 @@ def I():
         return N
     elif check('int'):
         decl = Node("nd_decl", None, precedant.position)
+        while check("star"):    # On se debarasse des etoiles
+            pass
         accept("ident")
         decl.add_child(Node("nd_var", precedant.valeur, precedant.position))
         while not check('pvirg'):
             accept('virg')
+            while check("star"): # On se debarasse des etoiles
+                pass
             accept('ident')
             decl.add_child(Node("nd_var", precedant.valeur, precedant.position))
         return decl
@@ -289,7 +305,7 @@ def I():
         cond = Node('nd_cond', None, precedant.position)
         cond.add_child(test)
         cond.add_child(instr)
-        cond.addchild(Node('nd_break', None, precedant.position))
+        cond.add_child(Node('nd_break', None, precedant.position))
         l.add_child(cond)
         return l
     elif check('do'):
@@ -358,7 +374,12 @@ def E(pmin = 0):
         "star": Operation(6, "nd_mul", 1),
         "div": Operation(6, "nd_div", 1),
         "mod": Operation(6, "nd_mod", 1),
-        "equal": Operation(3, "nd_affect", 0)
+        "equal": Operation(3, "nd_affect", 0),
+        "sup": Operation(4, "nd_sup", 1),
+        "sup_equal": Operation(4, "nd_sup_equal", 1),
+        "inf": Operation(4, "nd_inf", 1),
+        "inf_equal": Operation(4, "nd_inf_equal", 1),
+        "notequal": Operation(4, "nd_not_equal", 1)
     }
 
     A1 = P()
@@ -382,16 +403,24 @@ def E(pmin = 0):
 def P():
     if check('sub'): 
         N = P()
-        M = Node('nd_neg', None, courant.position)
+        M = Node('nd_neg', None, precedant.position)
         M.add_child(N)
         return M
     elif check('add'):
         return P()
     elif check('neglog'):
         N = P()
-        M = Node('nd_neglog', None, courant.position)
+        M = Node('nd_neglog', None, precedant.position)
         M.add_child(N)
         return M
+    elif check('star'):
+        N = Node("nd_indir", None, precedant.position)
+        N.add_child(P())
+        return N
+    elif check("esper"):
+        N = Node("nd_adr", None, precedant.position)
+        N.add_child(P())
+        return N
     else:
         return S()
 
@@ -434,8 +463,8 @@ def A():
 class CompilationException(Exception):
     pass
 
-def error(msg = "ERROR OMG OMG OMG !!!"):
-    raise CompilationException(msg)
+def error(msg = "ERROR OMG OMG OMG !!!", l=""):
+    raise CompilationException(msg+f"l.{l}" if l != "" else msg)
 
 def check(type):
     global courant
@@ -475,7 +504,7 @@ def ASeNode(N):
                 s= declare(child)
                 child.adr = s.adr
         case "nd_affect":
-            if N.children[0].type != "nd_var":
+            if N.children[0].type != "nd_var" and N.children[0].type != "nd_indir":
                 error("Affectation à un truc pas affectable.")
             for child in N.children:
                 ASeNode(child)
@@ -490,7 +519,11 @@ def ASeNode(N):
         case "nd_call":
             s = find(N.valeur)
             if s.type != "fonction":
-                error("Erreur : A essaye d'appeler autre chose qu'une fonction !")            
+                error("Erreur : A essaye d'appeler autre chose qu'une fonction !")  
+        case "nd_adr":
+            if (N.children[0].type != "nd_var"):
+                error("Erreur : Une variable est attendue ! l.",N.ligne)
+            ASeNode(N.children[0])
         case _:
             for child in N.children:
                 ASeNode(child)
@@ -541,7 +574,12 @@ def Gc():
         if courant.type == "EOS":
             break
 
-    outtxt += f".start\nprep main\ncall 0\ndbg \nhalt"
+    outtxt += "\n;RUNTIME\n"
+
+    outtxt += ".adrof \nget -1\nget 0 \nsub \npush 1 \nsub \nret\n"
+
+    outtxt += ";RUNTIME\n\n"
+    outtxt += ".start\nprep main\ncall 0\ndbg \nhalt"
 
 label = 0
 label_break = 0
@@ -580,9 +618,9 @@ def GenNode(N):
             s = f"{GenNode(N.children[0])}jumpf l{l1} \n{GenNode(N.children[1])}jump l{l2} \n.l{l1} \n{GenNode(N.children[2])}.l{l2}\n"
             return s
         case "nd_break":
-            return f"jump l{label_break}"
+            return f"jump l{label_break}\n"
         case "nd_return":
-            return f"{GenNode(N.children[0])}ret\n"
+            return f"{GenNode(N.children[0])}ret ; DEAD CODE FROM NOW\n"
         case "nd_loop":
             temp = label_break
             label_break = label
@@ -591,7 +629,7 @@ def GenNode(N):
             label += 1
 
             s = f".l{l1} \n"
-            for child in N.child:
+            for child in N.children:
                 s += GenNode(child)
             
             s += f"jump l{l1}\n"
@@ -602,13 +640,32 @@ def GenNode(N):
         case "nd_decl":
             return ""
         case "nd_var":
-            return f"get {N.adr}; {N.valeur} \n"
+            return f"get {N.adr} ; {N.valeur} \n"
         case "nd_affect":
-            return f"{GenNode(N.children[1])}dup \nset {N.children[0].adr}; {N.children[0].valeur} \n"
+            if N.children[0].type == "nd_indir":
+                return f"{GenNode(N.children[1])}dup \n{GenNode(N.children[0].children[0])}write \n"
+            return f"{GenNode(N.children[1])}dup \nset {N.children[0].adr} ; {N.children[0].valeur} \n"
         case "nd_call":
             return f"prep {N.valeur} \n" + "".join([f"{GenNode(child)}" for child in N.children]) + f"call {len(N.children)}\n"
         case "nd_func":
-            return f".{N.valeur} \nresn {nbvar} \n{GenNode(N.children[1])}push 0 \nret \n"
+            return f".{N.valeur} \nresn {nbvar} \n{GenNode(N.children[1])}push 0 \nret \n\n"
+        case "nd_indir":
+            return f"{GenNode(N.children[0])}read \n"
+        case "nd_adr":
+            return f"prep adrof \npush {N.children[0].adr}\ncall 1 \n"
+        case "nd_sup":
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}cmpgt\n"
+        case "nd_sup_equal":
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}cmpge\n"
+        case "nd_inf":
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}cmplt\n"
+        case "nd_inf_equal":
+            print([child for child in N.children])
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}cmple\n"
+        case "nd_equal":
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}cmpeq\n"
+        case "nd_not_equal":
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}cmpne\n"
         case _:
             return ""
 

@@ -1,0 +1,33 @@
+.main 
+resn 3 
+push 1
+dup 
+set 2; adresse 
+drop
+prep adrof 
+push 2
+call 1 
+dup 
+set 1; maison 
+drop
+get 1; maison 
+ret; DEAD CODE FROM NOW
+push 0 
+ret 
+
+
+;RUNTIME
+.adrof 
+get -1
+get 0 
+sub 
+push 1 
+sub 
+ret
+;RUNTIME
+
+.start
+prep main
+call 0
+dbg 
+halt

@@ -1,0 +1,10 @@
+int main()
+{
+    int maison;
+    int *adresse;
+    adresse = 1;
+
+    maison = &adresse;
+
+    return maison;
+}

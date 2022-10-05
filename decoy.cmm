@@ -1,19 +1,4 @@
-int BashBoush4Life(int a, int b)
-{
-    return 4;
-}
-
 int main()
 {
-    int Mitra, Bashen;
-
-    int a_a;
-
-    Mitra = 2;
-    Bashen = Mitra;
-
-    int amour;
-    amour = Bashen + Mitra + BashBoush4Life(2, 3);
-
-    return amour;
+    return (5 >= 6);
 }
