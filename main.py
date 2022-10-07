@@ -193,6 +193,10 @@ def next():
                     token = Token("break", None, ligne)
                 elif s == "continue":
                     token = Token("continue", None, ligne)
+                elif s == "send":
+                    token = Token("send", None, ligne)
+                elif s == "recv":
+                    token = Token("recv", None, ligne)
                 else:
                     token = Token("ident", s, ligne)           
             else:
@@ -359,6 +363,11 @@ def I():
         N.add_child(E())
         accept("pvirg")
         return N
+    elif check("send"):
+        sendNode = Node("nd_send", None, precedant.position)
+        sendNode.add_child(E())
+        accept("pvirg")
+        return sendNode
     else:
         N = Node('nd_drop', None, courant.position)
         N.add_child(E())
@@ -425,7 +434,17 @@ def P():
         return S()
 
 def S():
-    return A()
+    r = A()
+    while check('co'):
+        indir = Node('nd_indir', None, precedant.position)
+        indir.add_child(Node('nd_add', None, precedant.position))
+        e = E()
+        indir.children[0].add_child(r)
+        indir.children[0].add_child(e)
+        r = indir
+        accept('cf')
+    return r
+
 
 class Symbol():
     def __init__(bashboush, ident=None, type="sym_var", adr=None):
@@ -443,6 +462,8 @@ def A():
         N = E()
         accept('pf')
         return N
+    elif check("recv"):
+        return Node("recv", None, precedant.ligne)
     elif check("ident"):
         name = precedant.valeur
         N = Node('nd_call', name, precedant.position)
@@ -621,6 +642,10 @@ def GenNode(N):
             return f"jump l{label_break}\n"
         case "nd_return":
             return f"{GenNode(N.children[0])}ret ; DEAD CODE FROM NOW\n"
+        case "nd_send":
+            return f"{GenNode(N.children[0])}send \n"
+        case "nd_recv":
+            return "recv \n"
         case "nd_loop":
             temp = label_break
             label_break = label

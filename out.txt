@@ -1,8 +1,15 @@
+.oui 
+resn 1 
+get 0 ; n 
+ret ; DEAD CODE FROM NOW
+push 0 
+ret 
+
 .main 
 resn 1 
-push 5
+prep oui 
 push 6
-cmpge
+call 1
 ret ; DEAD CODE FROM NOW
 push 0 
 ret 

@@ -1,0 +1,40 @@
+int malloc(int n)
+{
+    int p, r;
+    
+    p = 0;
+    r = *p;
+    *p = *p+n;
+
+    return r;
+}
+
+int free(int p){
+
+}
+
+int print_inner(int n)
+{
+    if (n > 9)
+    {
+        print_inner(n/10);
+        print_inner(n%10);
+    }
+    else
+    {
+        send(n+48);
+    }
+}
+
+int print(int n)
+{
+    print_inner(n);
+    send(10);
+}
+
+
+int main()
+{
+    print(4);
+    ;;;return(3);
+}
