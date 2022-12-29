@@ -130,20 +130,20 @@ def next():
             position+=1
             token = Token("inf", None, ligne)
     elif char == '!':
-        position+=1
-        token = Token("neglog", None, ligne)
-
-        if position < len(string):
-            if string[position] == "=":
-                position+=1
-                token = Token("notequal", None, ligne)
+        if string[position+1] == "=":
+            position+=2
+            token = Token("notequal", None, ligne)
+        else:
+            position+=1
+            token = Token("neglog", None, ligne)
     elif char == '=':
-        position+=1
-        token = Token("assign", None, ligne)
-        if position < len(string):
-            if string[position]:
-                position+=1
-                token = Token("equal", None, ligne)
+
+        if string[position+1] ==  '=':
+            position+=2
+            token = Token("equal", None, ligne)
+        else:
+            position+=1
+            token = Token("affect", None, ligne)
     elif char == '|':
         position+=1
         if position < len(string):
@@ -383,7 +383,8 @@ def E(pmin = 0):
         "star": Operation(6, "nd_mul", 1),
         "div": Operation(6, "nd_div", 1),
         "mod": Operation(6, "nd_mod", 1),
-        "equal": Operation(3, "nd_affect", 0),
+        "affect": Operation(3, "nd_affect", 0),
+        "equal": Operation(4, "nd_equal", 1),
         "sup": Operation(4, "nd_sup", 1),
         "sup_equal": Operation(4, "nd_sup_equal", 1),
         "inf": Operation(4, "nd_inf", 1),
@@ -563,22 +564,24 @@ def find(ident):
     # Faire retourner un Symbole
     global pile
 
-    for table in pile[::-1]:
-        if ident in table:
-            return table[ident]    
+    for scope in pile[::-1]:
+        if ident in scope:
+            return scope[ident]
     error("Erreur : Variable inconnue/pas dans le scope")
 
 def declare(c):
     global nbvar
     global pile
-    
+
     if c.valeur in pile[-1]:
         error("Variable deja déclaree")
     
+    print(f"\nDeclaring {c.valeur}... Done !\n")
     s = Symbol(c.valeur, "sym_var", nbvar)
     pile[-1][c.valeur] = s
     nbvar += 1
 
+    print(pile)
     return s
 
 
@@ -621,8 +624,8 @@ def GenNode(N):
             return f"{GenNode(N.children[0])}{GenNode(N.children[1])}div\n"
         case "nd_mod":
             return f"{GenNode(N.children[0])}{GenNode(N.children[1])}mod\n"
-        case "nd_equal":
-            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}ERROR\n"
+        # case "nd_equal":
+        #     return f"{GenNode(N.children[0])}{GenNode(N.children[1])}ERROR\n"
         case "nd_neg":
             return f"push 0\n{GenNode(N.children[0])}sub\n"
         case "nd_drop":
@@ -630,7 +633,6 @@ def GenNode(N):
         case "nd_block":
             return "".join([f"{GenNode(child)}" for child in N.children])
         case "nd_cond":
-            print(f"FLAG : {len(N.children)}")
             if len(N.children) < 3:
                 N.add_child(Node(None, None, None))
             l1 = label
@@ -665,6 +667,10 @@ def GenNode(N):
         case "nd_decl":
             return ""
         case "nd_var":
+            # TODO : A supprimer
+            if N.adr is None:
+                print(f"Dict : {pile}")
+
             return f"get {N.adr} ; {N.valeur} \n"
         case "nd_affect":
             if N.children[0].type == "nd_indir":
@@ -685,7 +691,6 @@ def GenNode(N):
         case "nd_inf":
             return f"{GenNode(N.children[0])}{GenNode(N.children[1])}cmplt\n"
         case "nd_inf_equal":
-            print([child for child in N.children])
             return f"{GenNode(N.children[0])}{GenNode(N.children[1])}cmple\n"
         case "nd_equal":
             return f"{GenNode(N.children[0])}{GenNode(N.children[1])}cmpeq\n"

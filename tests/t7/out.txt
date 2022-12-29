@@ -1,0 +1,79 @@
+.main 
+resn 3 
+push 2
+dup 
+set 1 ; a 
+drop
+push 2
+dup 
+set 2 ; b 
+drop
+get 1 ; a 
+push 2
+cmpeq
+jumpf l0 
+push 3
+dup 
+set 1 ; a 
+drop
+jump l1 
+.l0 
+push 1
+dup 
+set 1 ; a 
+drop
+.l1
+get 1 ; a 
+push 3
+cmpeq
+jumpf l2 
+get 2 ; b 
+push 2
+cmpeq
+jumpf l4 
+push 1
+dup 
+set 1 ; a 
+drop
+jump l5 
+.l4 
+.l5
+jump l3 
+.l2 
+.l3
+get 1 ; a 
+push 3
+cmpeq
+jumpf l6 
+push 2
+dup 
+set 1 ; a 
+drop
+jump l7 
+.l6 
+push 3
+dup 
+set 1 ; a 
+drop
+.l7
+get 1 ; a 
+ret ; DEAD CODE FROM NOW
+push 0 
+ret 
+
+
+;RUNTIME
+.adrof 
+get -1
+get 0 
+sub 
+push 1 
+sub 
+ret
+;RUNTIME
+
+.start
+prep main
+call 0
+dbg 
+halt
