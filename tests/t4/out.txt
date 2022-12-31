@@ -1,19 +1,78 @@
+.main 
+resn 6 
+push 4
+push 0
+or
+dup 
+set 0 ; a 
+drop
+push 4
+push 0
+and
+dup 
+set 1 ; b 
+drop
+push 4
+push 0
+cmpeq
+dup 
+set 2 ; c 
+drop
+push 4
+push 0
+cmpne
+dup 
+set 3 ; d 
+drop
+push 4
+push 0
+and
+push 4
+or
+dup 
+set 4 ; e 
+drop
+push 4
+push 4
+and
+push 0
+or
+push 0
+and
+dup 
+set 5 ; f 
+drop
+get 0 ; a 
+get 1 ; b 
+not
+and
+get 2 ; c 
+not
+and
+get 3 ; d 
+and
+get 4 ; e 
+and
+get 5 ; f 
+not
+and
+ret ; DEAD CODE FROM NOW
+push 0 
+ret 
+
+
+;RUNTIME
+.adrof 
+get -1
+get 0 
+sub 
+push 1 
+sub 
+ret
+;RUNTIME
+
 .start
-resn 2
-
-push 2 
-dup 
-set 1; Mitra
-drop
-push 3 
-dup 
-set 0; BashBoush
-drop
-get 1; Mitra 
-
-get 0; BashBoush 
-
-add
-drop 
+prep main
+call 0
 dbg 
 halt

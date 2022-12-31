@@ -25,7 +25,7 @@ class Node:
             self.children = children
 
     def __repr__(self) -> str:
-        return f"Type : {self.type}, Valeur : {self.valeur}, Ligne : {self.ligne}, Adresse : {self.adr}, Enfants :" + "".join([n.type for n in self.children])
+        return f"Type : {self.type}, Valeur : {self.valeur}, Ligne : {self.ligne}, Adresse : {self.adr}, Enfants :" + "".join([n.type + ", " for n in self.children])
     
     def add_child(self, child):
         self.children.append(child)
@@ -254,12 +254,12 @@ def F():
 
     if check("int"):
         accept("ident")
-        N.children[0].add_child(Node("nd_arg", precedant.valeur, precedant.position))
+        N.children[0].add_child(Node("nd_var", precedant.valeur, precedant.position))
 
         while check('virg'):
             accept("int")
             accept("ident")
-            N.children[0].add_child(Node("nd_arg", precedant.valeur, precedant.position))
+            N.children[0].add_child(Node("nd_var", precedant.valeur, precedant.position))
 
     accept("pf")
     instr = I()
@@ -300,6 +300,9 @@ def I():
             accept('ident')
             decl.add_child(Node("nd_var", precedant.valeur, precedant.position))
         return decl
+    elif check('break'):
+        accept("pvirg")
+        return Node("nd_break", None, precedant.position)
     elif check('while'):
         accept('po')
         test = E()
@@ -328,6 +331,8 @@ def I():
         cond.add_child(not_)
         cond.add_child(Node('nd_break', None, precedant.position))
 
+        l.add_child(cond)
+
         return l
     elif check('for'):
         accept('po')
@@ -335,18 +340,19 @@ def I():
         accept('pvirg')
         test = E()
         accept('pvirg')
-        next = E()
-        accept('po')
+        step = E()
+        accept('pf')
 
         instr = I()
 
         seq = Node('nd_seq', None, precedant.position)
         seq.add_child(init)
         l = Node('nd_loop', None, precedant.position)
-        seq.add_child(l)
-
+        
         l.add_child(instr)
-        l.add_child(next)
+        l.add_child(step)
+
+        seq.add_child(l)
         
         cond = Node('nd_cond', None, precedant.position)
 
@@ -389,7 +395,10 @@ def E(pmin = 0):
         "sup_equal": Operation(4, "nd_sup_equal", 1),
         "inf": Operation(4, "nd_inf", 1),
         "inf_equal": Operation(4, "nd_inf_equal", 1),
-        "notequal": Operation(4, "nd_not_equal", 1)
+        "notequal": Operation(4, "nd_not_equal", 1),
+        "or": Operation(4, "nd_or", 1),
+        "and": Operation(4, "nd_and", 1)
+
     }
 
     A1 = P()
@@ -401,9 +410,6 @@ def E(pmin = 0):
             A = Node(table[op].noeud, None, precedant.position)
             A.add_child(A1)
             A.add_child(A2)
-
-            if A.type == "nd_affect":
-                print(f"E1 : {A1.type}, E2 : {A2.type} \n")
 
             A1 = A
         else: 
@@ -508,6 +514,7 @@ def ASe():
     N = AS()
     global nbvar        # On choisit de ne pas mettre nbvar dans le noeud fonction, on a mis le nom à la place
     nbvar = 0
+    print(N)
     ASeNode(N)
     return N
 
@@ -532,15 +539,14 @@ def ASeNode(N):
                 ASeNode(child)
         case "nd_func":
             s = declare(N)
-            s.type = "fonction"
             start_block()
             for child in N.children:
                 ASeNode(child)
-            nbvar = nbvar - len(N.children[0].children)
             end_block()
+            nbvar = nbvar - len(N.children[0].children)
         case "nd_call":
             s = find(N.valeur)
-            if s.type != "fonction":
+            if s.type != "sym_func":
                 error("Erreur : A essaye d'appeler autre chose qu'une fonction !")  
         case "nd_adr":
             if (N.children[0].type != "nd_var"):
@@ -566,6 +572,7 @@ def find(ident):
 
     for scope in pile[::-1]:
         if ident in scope:
+            # print(pile)
             return scope[ident]
     error("Erreur : Variable inconnue/pas dans le scope")
 
@@ -573,17 +580,20 @@ def declare(c):
     global nbvar
     global pile
 
-    if c.valeur in pile[-1]:
-        error("Variable deja déclaree")
-    
-    print(f"\nDeclaring {c.valeur}... Done !\n")
-    s = Symbol(c.valeur, "sym_var", nbvar)
-    pile[-1][c.valeur] = s
-    nbvar += 1
+    if c.type == "nd_var":
+        if c.valeur in pile[-1]:
+            error("Variable deja déclaree")
+        
+        s = Symbol(c.valeur, "sym_var", nbvar)
+        pile[-1][c.valeur] = s
+        nbvar += 1
+    else:
+        if c.valeur in pile[-1]:
+            error("Fonction deja déclaree")
+        s = Symbol(c.valeur, "sym_func")
+        pile[-1][c.valeur] = s
 
-    print(pile)
     return s
-
 
 ## Generation de Code
 def Gc():
@@ -624,12 +634,12 @@ def GenNode(N):
             return f"{GenNode(N.children[0])}{GenNode(N.children[1])}div\n"
         case "nd_mod":
             return f"{GenNode(N.children[0])}{GenNode(N.children[1])}mod\n"
-        # case "nd_equal":
-        #     return f"{GenNode(N.children[0])}{GenNode(N.children[1])}ERROR\n"
         case "nd_neg":
             return f"push 0\n{GenNode(N.children[0])}sub\n"
         case "nd_drop":
             return f"{GenNode(N.children[0])}drop\n"
+        case "nd_block":
+            return "".join([f"{GenNode(child)}" for child in N.children])
         case "nd_block":
             return "".join([f"{GenNode(child)}" for child in N.children])
         case "nd_cond":
@@ -667,10 +677,6 @@ def GenNode(N):
         case "nd_decl":
             return ""
         case "nd_var":
-            # TODO : A supprimer
-            if N.adr is None:
-                print(f"Dict : {pile}")
-
             return f"get {N.adr} ; {N.valeur} \n"
         case "nd_affect":
             if N.children[0].type == "nd_indir":
@@ -696,6 +702,12 @@ def GenNode(N):
             return f"{GenNode(N.children[0])}{GenNode(N.children[1])}cmpeq\n"
         case "nd_not_equal":
             return f"{GenNode(N.children[0])}{GenNode(N.children[1])}cmpne\n"
+        case "nd_and":
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}and\n"
+        case "nd_or":
+            return f"{GenNode(N.children[0])}{GenNode(N.children[1])}or\n"
+        case "nd_neglog":
+            return f"{GenNode(N.children[0])}not\n"
         case _:
             return ""
 

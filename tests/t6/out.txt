@@ -1,17 +1,39 @@
 .main 
-resn 3 
+resn 2 
+push 0
+dup 
+set 0 ; a 
+drop
+.l1 
 push 1
+get 0 ; a 
+add
 dup 
-set 2; adresse 
+set 0 ; a 
 drop
-prep adrof 
+push 1
 push 2
-call 1 
+get 0 ; a 
+mul
+add
 dup 
-set 1; maison 
+set 1 ; b 
 drop
-get 1; maison 
-ret; DEAD CODE FROM NOW
+get 0 ; a 
+push 10
+cmplt
+not
+jumpf l2 
+jump l0
+jump l3 
+.l2 
+.l3
+jump l1
+.l0
+get 0 ; a 
+push 10
+cmpeq
+ret ; DEAD CODE FROM NOW
 push 0 
 ret 
 

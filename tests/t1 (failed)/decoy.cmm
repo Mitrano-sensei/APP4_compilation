@@ -1,18 +1,3 @@
-int malloc(int n)
-{
-    int p, r;
-    
-    p = 0;
-    r = *p;
-    *p = *p+n;
-
-    return r;
-}
-
-int free(int p){
-
-}
-
 int print_inner(int n)
 {
     if (n > 9)
@@ -34,4 +19,15 @@ int print(int n)
 
 
 int main() {
+	int i, j, res;
+	res = 0;
+
+	for(i = 0; i < 10; i = i + 1 )
+	{
+		for (j = 0; j < 10; j = j + 1)
+		{
+			print(j);
+			res = res + 1;
+		}
+	}
 }

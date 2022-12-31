@@ -1,34 +1,57 @@
-int main()
+int print_inner(int n)
 {
-    int a, b;
-    a = 2;
-    b = 2; 
-
-    if (a==2)
+    if (n > 9)
     {
-        a = 3;
-    }
-    else 
-    {
-        a = 1;
-    }
-
-    if (a == 3)
-    {
-        if ( b == 2 )
-        {
-            a = 1;
-        }
-    }
-
-    if (a == 3)
-    {
-        a = 2;
+        print_inner(n/10);
+        print_inner(n%10);
     }
     else
     {
-        a = 3;
+        send(n+48);
     }
+}
 
-    return a;
+int print(int n)
+{
+    print_inner(n);
+    send(10);
+}
+
+
+int main() {
+	int a;
+
+	for (a = 0; a < 10; a = a + 1)
+	{
+		if (a == 5)
+		{
+			break;
+		}
+	}
+
+	int b;
+	b = 0;
+
+	while (b < 10)
+	{
+		b = b + 1;
+		if (b == 5)
+		{
+			break;
+		}
+	}
+
+	int c;
+	c = 0;
+
+	do
+	{
+		c = c + 1;
+		if (c == 5)
+		{
+			break;
+		}
+	} while (c < 10);
+	
+	return (a == 5) && (b == 5) && (c == 5);
 }

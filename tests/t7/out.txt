@@ -1,62 +1,139 @@
-.main 
-resn 3 
-push 2
-dup 
-set 1 ; a 
-drop
-push 2
-dup 
-set 2 ; b 
-drop
-get 1 ; a 
-push 2
-cmpeq
+.print_inner 
+resn 0 
+get 0 ; n 
+push 9
+cmpgt
 jumpf l0 
-push 3
-dup 
-set 1 ; a 
+prep print_inner 
+get None ; n 
+push 10
+div
+call 1
+drop
+prep print_inner 
+get None ; n 
+push 10
+mod
+call 1
 drop
 jump l1 
 .l0 
-push 1
-dup 
-set 1 ; a 
-drop
+get 0 ; n 
+push 48
+add
+send 
 .l1
-get 1 ; a 
-push 3
-cmpeq
-jumpf l2 
-get 2 ; b 
-push 2
+push 0 
+ret 
+
+.print 
+resn 0 
+prep print_inner 
+get None ; n 
+call 1
+drop
+push 10
+send 
+push 0 
+ret 
+
+.main 
+resn 3 
+.l3 
+get 0 ; a 
+push 5
 cmpeq
 jumpf l4 
-push 1
-dup 
-set 1 ; a 
-drop
+jump l2
 jump l5 
 .l4 
 .l5
-jump l3 
-.l2 
-.l3
-get 1 ; a 
-push 3
-cmpeq
-jumpf l6 
-push 2
+get 0 ; a 
+push 1
+add
 dup 
-set 1 ; a 
-drop
+set 0 ; a 
+get 0 ; a 
+push 10
+cmplt
+not
+jumpf l6 
+jump l2
 jump l7 
 .l6 
-push 3
-dup 
-set 1 ; a 
-drop
 .l7
-get 1 ; a 
+jump l3
+.l2
+push 0
+dup 
+set 1 ; b 
+drop
+.l9 
+get 1 ; b 
+push 10
+cmplt
+jumpf l10 
+get 1 ; b 
+push 1
+add
+dup 
+set 1 ; b 
+drop
+get 1 ; b 
+push 5
+cmpeq
+jumpf l12 
+jump l8
+jump l13 
+.l12 
+.l13
+jump l11 
+.l10 
+jump l8
+.l11
+jump l9
+.l8
+push 0
+dup 
+set 2 ; c 
+drop
+.l15 
+get 2 ; c 
+push 1
+add
+dup 
+set 2 ; c 
+drop
+get 2 ; c 
+push 5
+cmpeq
+jumpf l16 
+jump l14
+jump l17 
+.l16 
+.l17
+get 2 ; c 
+push 10
+cmplt
+not
+jumpf l18 
+jump l14
+jump l19 
+.l18 
+.l19
+jump l15
+.l14
+get 0 ; a 
+push 5
+cmpeq
+get 1 ; b 
+push 5
+cmpeq
+and
+get 2 ; c 
+push 5
+cmpeq
+and
 ret ; DEAD CODE FROM NOW
 push 0 
 ret 

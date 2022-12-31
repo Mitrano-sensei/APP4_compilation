@@ -1,38 +1,33 @@
-.start
+.main 
+resn 3 
 push 1
+dup 
+set 2; adresse 
+drop
+prep adrof 
 push 2
-add
-push 3
+call 1 
+dup 
+set 1; maison 
+drop
+get 1; maison 
+ret; DEAD CODE FROM NOW
+push 0 
+ret 
+
+
+;RUNTIME
+.adrof 
+get -1
+get 0 
 sub 
-jumpf l0 
-push 4
-push 5
-add
-drop
-push 6
-push 7
-div
-drop
-push 8
-push 8
-mul
-drop
-push 10 
-jumpf l2 
-push 9
-drop
-push 11
-drop
-push 12
-drop 
-jump l3 
-.l2 
-push 13
-drop 
-.l3 
-jump l1 
-.l0 
- 
-.l1 
+push 1 
+sub 
+ret
+;RUNTIME
+
+.start
+prep main
+call 0
 dbg 
 halt

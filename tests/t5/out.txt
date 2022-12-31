@@ -1,32 +1,29 @@
-.BashBoush4Life 
-resn 1 
-push 4
-ret ; DEAD CODE FROM NOW
-push 0 
-ret 
-
 .main 
-resn 5 
-push 2
+resn 2 
+.l1 
+get 0 ; a 
 dup 
-set 1 ; Mitra 
+set 1 ; b 
 drop
-get 1 ; Mitra 
-dup 
-set 2 ; Bashen 
-drop
-get 2 ; Bashen 
-get 1 ; Mitra 
-add
-prep BashBoush4Life 
-push 2
-push 3
-call 2
+get 0 ; a 
+push 1
 add
 dup 
-set 4 ; amour 
-drop
-get 4 ; amour 
+set 0 ; a 
+get 0 ; a 
+push 10
+cmplt
+not
+jumpf l2 
+jump l0
+jump l3 
+.l2 
+.l3
+jump l1
+.l0
+get 0 ; a 
+push 10
+cmpeq
 ret ; DEAD CODE FROM NOW
 push 0 
 ret 

@@ -1,9 +1,12 @@
+int main()
 {
+    int a, b, c, d, e, f;
+    a = 4 || 0;
+    b = 4 && 0;
+    c = 4 == 0;
+    d = 4 != 0;
+    e = 4 && 0 || 4;
+    f = 4 && 4 || 0 && 0;
 
-int BashBoush, Mitra;
-
-Mitra = 2;
-BashBoush = 3;
-
-Mitra + BashBoush;
+    return a && !b && !c && d && e && !f; 
 }
