@@ -82,73 +82,36 @@ push 0
 ret 
 
 .main 
-resn 3 
-push 1
-dup 
-set 0 ; a 
-drop
-push 2
+resn 2 
+push 5
 dup 
 set 1 ; b 
 drop
-prep adrof 
-push 0
-call 1 
+get 1 ; b 
 dup 
-set 2 ; c 
+get 0 ; a 
+write 
 drop
 prep print 
-prep adrof 
-push 0
-call 1 
-push 65533
-cmpeq
+get 0 ; a 
+read 
 call 1
 drop
 prep print 
-get 2 ; c 
-prep adrof 
+get 0 ; a 
 push 0
-call 1 
-cmpeq
+add
+read 
 call 1
 drop
-prep print 
-get 2 ; c 
+get 0 ; a 
 read 
 get 0 ; a 
-cmpeq
-call 1
-drop
-prep adrof 
-push 1
-call 1 
-dup 
-set 2 ; c 
-drop
-prep print 
-prep adrof 
-push 1
-call 1 
-push 65532
-cmpeq
-call 1
-drop
-prep print 
-get 2 ; c 
-prep adrof 
-push 1
-call 1 
-cmpeq
-call 1
-drop
-prep print 
-get 2 ; c 
+push 0
+add
 read 
-get 1 ; b 
 cmpeq
-call 1
-drop
+ret ; DEAD CODE FROM NOW
 push 0 
 ret 
 

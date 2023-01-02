@@ -1,15 +1,13 @@
 int main()
 {
-    int a, b;
-    int* c;
-    a = 1;
-    b = 2;
-    c = &a;
-    print((&a == 65533));
-    print((c == &a));
-    print((*c == a));
-    c = &b;
-    print((&b == 65532));
-    print((c == &b));
-    print((*c == b));
+    int *a;
+    int b;
+    b = 5;
+
+    *a = b;
+
+    print(*a);
+    print(a[0]);
+
+    return (*a == a[0]);
 }

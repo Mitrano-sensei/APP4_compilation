@@ -24,8 +24,6 @@ class Node:
         else:
             self.children = children
         
-        print(f"\n-------------\nNODE : \nType : {self.type}, Valeur : {self.valeur}\n")
-
     def __repr__(self) -> str:
         return f"Type : {self.type}, Valeur : {self.valeur}, Ligne : {self.ligne}, Adresse : {self.adr}, Enfants :" + "".join([n.type + ", " for n in self.children])
     
@@ -474,7 +472,7 @@ def A():
 class CompilationException(Exception):
     pass
 
-def error(msg = "ERROR OMG OMG OMG !!!", l=""):
+def error(msg = "Erreur :(", l=""):
     raise CompilationException(msg+f"l.{l}" if l != "" else msg)
 
 def check(type):
@@ -497,7 +495,6 @@ def ASe():
     N = AS()
     global nbvar        # On choisit de ne pas mettre nbvar dans le noeud fonction, on a mis le nom à la place
     nbvar = 0
-    print(N)
     ASeNode(N)
     return N
 
@@ -510,12 +507,9 @@ def ASeNode(N):
                 ASeNode(child)
             end_block()
         case "nd_var":
-            if (N.valeur == 'W'):
-                print("OMMMMMMMMMMMMMMMMMMMMMMMMMMMMG\n\n")
             N.adr = find(N.valeur).adr
         case "nd_decl":
             for child in N.children:
-                print(f"Type : {child.type}")
                 s= declare(child)
                 child.adr = s.adr
         case "nd_affect":
@@ -564,7 +558,6 @@ def find(ident):
         if ident in scope:
             return scope[ident]
     
-    print("OMG OMG OMG\n\n")
     error(f"Erreur : Variable inconnue/pas dans le scope (La variable : {ident})")
 
 def declare(c):
@@ -729,7 +722,7 @@ Gc()
 
 # Ecriture de fichier
 
-print(outtxt)
+#print(outtxt)
 
 with open(dest, "w") as out:
     out.write(outtxt)
