@@ -57,21 +57,6 @@ ret
 
 .print 
 resn 0 
-get 0 ; n 
-push 0
-cmplt
-jumpf l2 
-push 45
-send 
-push 0
-get 0 ; n 
-sub
-dup 
-set 0 ; n 
-drop
-jump l3 
-.l2 
-.l3
 prep print_inner 
 get 0 ; n 
 call 1
@@ -81,74 +66,76 @@ send
 push 0 
 ret 
 
+.minus 
+resn 0 
+get 0 ; n 
+push 0
+cmpeq
+jumpf l2 
+push 1
+ret ; DEAD CODE FROM NOW
+jump l3 
+.l2 
+prep minus 
+get 0 ; n 
+push 1
+sub
+call 1
+ret ; DEAD CODE FROM NOW
+.l3
+push 0 
+ret 
+
+.pow 
+resn 0 
+get 1 ; b 
+push 1
+cmpeq
+jumpf l4 
+get 0 ; a 
+ret ; DEAD CODE FROM NOW
+jump l5 
+.l4 
+get 0 ; a 
+prep pow 
+get 0 ; a 
+get 1 ; b 
+push 1
+sub
+call 2
+mul
+ret ; DEAD CODE FROM NOW
+.l5
+push 0 
+ret 
+
 .main 
 resn 3 
-push 1
+push 0
 dup 
 set 0 ; a 
 drop
-push 2
+push 1
+jumpf l6 
+push 10
 dup 
-set 1 ; b 
-drop
-prep adrof 
-push 0
-call 1 
-dup 
-set 2 ; c 
+set 1 ; a 
 drop
 prep print 
-prep adrof 
-push 0
-call 1 
-push 65533
-cmpeq
+get 1 ; a 
 call 1
 drop
+jump l7 
+.l6 
+.l7
 prep print 
-get 2 ; c 
-prep adrof 
-push 0
-call 1 
-cmpeq
-call 1
-drop
-prep print 
-get 2 ; c 
-read 
 get 0 ; a 
-cmpeq
 call 1
 drop
-prep adrof 
-push 1
-call 1 
-dup 
-set 2 ; c 
-drop
-prep print 
-prep adrof 
-push 1
-call 1 
-push 65532
+get 0 ; a 
+push 0
 cmpeq
-call 1
-drop
-prep print 
-get 2 ; c 
-prep adrof 
-push 1
-call 1 
-cmpeq
-call 1
-drop
-prep print 
-get 2 ; c 
-read 
-get 1 ; b 
-cmpeq
-call 1
-drop
+ret ; DEAD CODE FROM NOW
 push 0 
 ret 
 

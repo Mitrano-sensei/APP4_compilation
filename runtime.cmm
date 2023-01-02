@@ -28,10 +28,11 @@ int print_inner(int n)
 
 int print(int n)
 {
+    if (n < 0)
+    {
+        send(45);
+        n = -n;
+    }
     print_inner(n);
     send(10);
-}
-
-
-int main() {
 }

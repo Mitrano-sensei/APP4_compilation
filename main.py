@@ -23,6 +23,8 @@ class Node:
             self.children = []
         else:
             self.children = children
+        
+        print(f"\n-------------\nNODE : \nType : {self.type}, Valeur : {self.valeur}\n")
 
     def __repr__(self) -> str:
         return f"Type : {self.type}, Valeur : {self.valeur}, Ligne : {self.ligne}, Adresse : {self.adr}, Enfants :" + "".join([n.type + ", " for n in self.children])
@@ -35,17 +37,6 @@ class Operation:
         self.prio = prio
         self.noeud = noeud
         self.AG = AG
-
-# Le compilo
-## Lecture de fichier
-src = sys.argv[1]
-dest = sys.argv[2]
-position = 0
-ligne = 0
-
-with open(src) as file:
-    string = file.readlines()
-    string = "".join(string)
 
 ## Analyse linguistique
 def next():
@@ -61,7 +52,7 @@ def next():
         precedant = courant
         courant = token
 
-        print(courant)
+        #print(courant)
         return
     
     char =  string[position]
@@ -226,18 +217,11 @@ def next():
     precedant = courant
     courant = token
 
-    print(courant)
+    #print(courant)
 
 ## Analyse Synthaxique
 
 def AS():
-    # G (le plus général, englobe les fonctions et plein de trucs qu'on utilise pas)
-    # F (une fonction)
-    # I (une instruction)
-    # E (une expression)
-    # P (pour prefixe)
-    # S (pour suffixe)
-    # A (pour Atome)
     return G()
 
 def G():
@@ -396,9 +380,8 @@ def E(pmin = 0):
         "inf": Operation(4, "nd_inf", 1),
         "inf_equal": Operation(4, "nd_inf_equal", 1),
         "notequal": Operation(4, "nd_not_equal", 1),
-        "or": Operation(4, "nd_or", 1),
-        "and": Operation(4, "nd_and", 1)
-
+        "or": Operation(3, "nd_or", 1),
+        "and": Operation(3, "nd_and", 1)
     }
 
     A1 = P()
@@ -484,7 +467,7 @@ def A():
                 accept('pf')
                 return N          
         else:
-            return Node('nd_var', precedant.valeur, precedant.position)
+            return Node('nd_var', name, precedant.position)
     else:
         error(f"Erreur reconnaissance Atome ici : {precedant.position}")
 
@@ -527,9 +510,12 @@ def ASeNode(N):
                 ASeNode(child)
             end_block()
         case "nd_var":
+            if (N.valeur == 'W'):
+                print("OMMMMMMMMMMMMMMMMMMMMMMMMMMMMG\n\n")
             N.adr = find(N.valeur).adr
         case "nd_decl":
             for child in N.children:
+                print(f"Type : {child.type}")
                 s= declare(child)
                 child.adr = s.adr
         case "nd_affect":
@@ -546,6 +532,10 @@ def ASeNode(N):
             nbvar = nbvar - len(N.children[0].children)
         case "nd_call":
             s = find(N.valeur)
+            
+            for child in N.children:
+                ASeNode(child)
+
             if s.type != "sym_func":
                 error("Erreur : A essaye d'appeler autre chose qu'une fonction !")  
         case "nd_adr":
@@ -569,12 +559,13 @@ def end_block():
 def find(ident):
     # Faire retourner un Symbole
     global pile
-
+    
     for scope in pile[::-1]:
         if ident in scope:
-            # print(pile)
             return scope[ident]
-    error("Erreur : Variable inconnue/pas dans le scope")
+    
+    print("OMG OMG OMG\n\n")
+    error(f"Erreur : Variable inconnue/pas dans le scope (La variable : {ident})")
 
 def declare(c):
     global nbvar
@@ -715,6 +706,23 @@ def GenNode(N):
 # Main
 courant = None
 precedant = None
+
+## Lecture de fichier
+runtime = "./runtime.cmm"
+src = sys.argv[1]
+dest = sys.argv[2]
+position = 0
+ligne = 0
+
+with open(runtime) as file:
+    runtime_string = file.readlines()
+    runtime_string = "".join(runtime_string)
+
+with open(src) as file:
+    string = file.readlines()
+    string = "".join(string)
+
+string = runtime_string + "\n\n" + string
 
 next()
 Gc()

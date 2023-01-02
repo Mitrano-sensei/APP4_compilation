@@ -1,0 +1,28 @@
+int main() {
+	int a;
+	a = 0;
+
+	int b;
+	
+	for (b = 0; b < 10; b = b + 1) {
+        int c;
+        c = b;
+	}
+
+	do
+	{
+		a = 1 + a;
+		int b;
+		b = 1 + (2 * a);
+	} while (a < 10);
+
+	int d;
+	d = 0;
+
+	while (d<10)
+	{
+		d = d+1;
+	}
+
+    return (a == 10) && (b == 10) && (d == 10);
+}
